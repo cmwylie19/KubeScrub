@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/cmwylie19/kubefs/pkg/utils"
+	"github.com/cmwylie19/kubescrub/pkg/utils"
 	"go.uber.org/zap"
 )
 
