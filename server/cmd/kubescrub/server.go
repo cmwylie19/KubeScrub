@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cmwylie19/KubeScrub/server"
+	"github.com/cmwylie19/kubescrub/pkg/server"
 	"github.com/spf13/cobra"
 )
 

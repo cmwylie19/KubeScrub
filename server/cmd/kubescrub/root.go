@@ -13,6 +13,6 @@ var baseCmd = &cobra.Command{
 }
 
 func GetRootCommand() *cobra.Command {
-	baseCmd.AddCommand(getServerCommand)
+	baseCmd.AddCommand(getServerCommand())
 	return baseCmd
 }

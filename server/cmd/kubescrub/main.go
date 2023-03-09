@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if err := GetRootCmd().Execute(); err != nil {
+	if err := GetRootCommand().Execute(); err != nil {
 		utils.Logger.Error("Error executing command", zap.Error(err))
 		os.Exit(1)
 	}
