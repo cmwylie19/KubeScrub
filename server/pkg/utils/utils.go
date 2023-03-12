@@ -36,3 +36,10 @@ func GeneratePassword() string {
 	})
 	return string(buf) // E.g. "3i[g0|)z"
 }
+
+// func CreateSecret(secret string, namespace string) {
+// 	// TODO
+
+// }
+
+// }
