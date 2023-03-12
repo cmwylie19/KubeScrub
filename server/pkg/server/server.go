@@ -32,7 +32,48 @@ func EnableCors(f http.HandlerFunc) http.HandlerFunc {
 		f(w, r)
 	}
 }
+func (s *Server) CMHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	utils.Logger.Info("Scrubbing Kubernetes Cluster")
 
+	// find scrub assets
+
+	json.NewEncoder(w).Encode(s)
+}
+
+// Orphaned Secrets are secrets not associated with a pod, service, or service account
+func (s *Server) SecretHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	utils.Logger.Info("Scrubbing Kubernetes Cluster")
+
+	// find scrub assets
+
+	json.NewEncoder(w).Encode(s)
+}
+
+// Orphaned Services are services not associated with a pod
+func (s *Server) ServiceHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	utils.Logger.Info("Scrubbing Kubernetes Cluster")
+
+	// find scrub assets
+
+	json.NewEncoder(w).Encode(s)
+}
+
+// Orphaned Service Accounts are service accounts not associated with a pod, clusterrolebinding, or rolebinding
+func (s *Server) ServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	utils.Logger.Info("Scrubbing Kubernetes Cluster")
+
+	// find scrub assets
+
+	json.NewEncoder(w).Encode(s)
+}
 func (s *Server) ConfigHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -66,6 +107,10 @@ func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bo
 
 	http.HandleFunc("/", EnableCors(HealthCheckHandler))
 	http.HandleFunc("/config", EnableCors(s.ConfigHandler))
+	http.HandleFunc("/scrub/cm", EnableCors(s.CMHandler))
+	http.HandleFunc("/scrub/secret", EnableCors(s.SecretHandler))
+	http.HandleFunc("/scrub/svc", EnableCors(s.ServiceHandler))
+	http.HandleFunc("/scrub/sa", EnableCors(s.ServiceAccountHandler))
 
 	if key == "" || cert == "" {
 		utils.Logger.Info("Server started", zap.String("port", s.Port))
