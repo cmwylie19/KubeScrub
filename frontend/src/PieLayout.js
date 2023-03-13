@@ -7,18 +7,33 @@ import Title from './Title';
 function preventDefault(event) {
   event.preventDefault();
 }
-const COLORS = ['transparent', '#00C49F', '#FFBB28', '#FF8042'];
-const data = [
-  { name: 'Total', value: 40 },
+const COLORS = ['transparent','#00C49F', '#FFBB28', '#FF8042'];
+const ddata = [
+  { name: 'Total', value: 350 },
   { name: 'Orphaned', value: 300 }
 ];
 
-export default function PieLayout() {
+export default function PieLayout({data}) {
+  const [pieData, setPieData] = React.useState();
+
+  React.useEffect(() => {
+    // count total data
+    let count = 0
+    Array.isArray(data) && data.map((item) => item.metadata.annotations.exists == "true" && count++)
+    let tempData = [{
+      name: 'Total',
+      value: Array.isArray(data) ? data.length - count : 0
+    }, {
+      name: 'Orphaned',
+      value: count
+    }]
+    setPieData(tempData)
+  }, []);
   return (
     <React.Fragment>
       <Title>Orphaned Resources Percentages</Title>
       <Typography component="p" variant="h4">
-        40%
+        {Number.parseFloat((Array.isArray(pieData) ? pieData[1].value : 0)/(Array.isArray(pieData) ? pieData.length : 0)*100).toFixed(0)}%
       </Typography>
       <Typography color="text.secondary" sx={{ flex: 1 }}>
         Orphaned Resources 
@@ -26,9 +41,9 @@ export default function PieLayout() {
       <ResponsiveContainer>
           <PieChart>
           <Legend />
-            <Pie dataKey="value" data={data} fill="#2196f3" label>
+            <Pie dataKey="value" data={pieData} fill="#2196f3" label>
             {
-          	data.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]}/>)
+          Array.isArray(pieData) &&	pieData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]}/>)
           }
             </Pie>
           </PieChart>

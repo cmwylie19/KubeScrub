@@ -26,7 +26,7 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { amber, red, blue, grey, green } from '@mui/material/colors';
-import Pie from './Pie';
+import Pie from './PieLayout';
 import TableResources from './TableResources';
 import Config from "./Config"
 import Login from './Login';
@@ -308,7 +308,7 @@ function DashboardContent() {
                     height: 340,
                   }}
                 >
-                  <Pie />
+                  <Pie data={cm} />
                 </Paper>
               </Grid>
               {/* TableResources */}
