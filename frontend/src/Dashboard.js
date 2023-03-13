@@ -9,7 +9,16 @@ import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
-
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import PeopleIcon from '@mui/icons-material/People';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import ListSubheader from '@mui/material/ListSubheader';
+import LayersIcon from '@mui/icons-material/Layers';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
@@ -17,13 +26,11 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { amber, red, blue, grey, green } from '@mui/material/colors';
-import { mainListItems, secondaryListItems } from './listItems';
-import Chart from './Chart';
-import Deposits from './Pie';
-import Orders from './Results';
+import Pie from './Pie';
+import TableResources from './TableResources';
 import Config from "./Config"
 import Login from './Login';
-import { fetchConfig } from "./helpers"
+import { fetchConfig, fetchConfigMaps } from "./helpers"
 
 const Div = styled('div')(({ theme }) => ({
   ...theme.typography.button,
@@ -125,6 +132,9 @@ function DashboardContent() {
   const [open, setOpen] = React.useState(true);
   const [mode, setMode] = React.useState('dark');
   const [pw, setPW] = React.useState('')
+  const [cm,setCM]=React.useState([])
+  const [resources, setResources] = React.useState("all")
+  const [namespaces, setNamespaces] = React.useState("all")
   const [resource, setResource] = React.useState("all")
   const [namespace, setNamespace] = React.useState("all")
 
@@ -133,6 +143,10 @@ function DashboardContent() {
   };
 
   React.useEffect(() => {
+    fetchConfigMaps().then((data) => {
+      data.items.map((item) => item.kind = "ConfigMap")
+      setCM(data.items)
+    })
     fetchConfig().then((config) => {
       setMode(config.theme)
     })
@@ -170,7 +184,7 @@ function DashboardContent() {
               noWrap
               sx={{ flexGrow: 1 }}
             >
-              {resource}:{namespace}
+              {resources}:{namespaces}
             </Typography>
             <IconButton color="inherit">
 
@@ -205,9 +219,67 @@ function DashboardContent() {
           </Toolbar>
           <Divider />
           <List component="nav">
-            {mainListItems}
+          <ListSubheader component="div" inset >
+      Resource
+    </ListSubheader>
+    <ListItemButton onClick={()=>setResources("All")}>
+      <ListItemIcon>
+        <LayersIcon />
+      </ListItemIcon>
+      <ListItemText primary="All" />
+    </ListItemButton>
+    <ListItemButton onClick={()=>setResources("SAs")}>
+      <ListItemIcon>
+        <DashboardIcon />
+      </ListItemIcon>
+      <ListItemText primary="Service Accounts" />
+    </ListItemButton>
+    <ListItemButton onClick={()=>setResources("CMs")}>
+      <ListItemIcon>
+        <ShoppingCartIcon />
+      </ListItemIcon>
+      <ListItemText primary="Config Maps" />
+    </ListItemButton>
+    <ListItemButton onClick={()=>setResources("SVCs")}>
+      <ListItemIcon>
+        <PeopleIcon />
+      </ListItemIcon>
+      <ListItemText primary="Services" />
+    </ListItemButton>
+    <ListItemButton  onClick={()=>setResources("Secrets")}>
+      <ListItemIcon>
+        <BarChartIcon />
+      </ListItemIcon>
+      <ListItemText primary="Secrets" />
+    </ListItemButton>
             <Divider sx={{ my: 1 }} />
-            {secondaryListItems}
+            <ListSubheader component="div" inset>
+      Namespaces
+    </ListSubheader>
+    <ListItemButton>
+      <ListItemIcon>
+        <LayersIcon />
+      </ListItemIcon>
+      <ListItemText primary="All" />
+    </ListItemButton>
+    <ListItemButton>
+      <ListItemIcon>
+        <AssignmentIcon />
+      </ListItemIcon>
+      <ListItemText primary="default" />
+    </ListItemButton>
+    <ListItemButton>
+      <ListItemIcon>
+        <AssignmentIcon />
+      </ListItemIcon>
+      <ListItemText primary="kube-system" />
+    </ListItemButton>
+    <ListItemButton>
+      <ListItemIcon>
+        <AssignmentIcon />
+      </ListItemIcon>
+      <ListItemText primary="kubefs" />
+    </ListItemButton>
           </List>
         </Drawer>
         <Box
@@ -236,13 +308,13 @@ function DashboardContent() {
                     height: 340,
                   }}
                 >
-                  <Deposits />
+                  <Pie />
                 </Paper>
               </Grid>
-              {/* Recent Orders */}
+              {/* TableResources */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <Orders />
+                  <TableResources data={cm} />
                 </Paper>
               </Grid>
             </Grid>

@@ -26,6 +26,7 @@ func getServerCommand() *cobra.Command {
 		Short:   "Start the KubeScrub server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &server.Server{}
+			s.Start()
 			return s.Serve(key, cert, port, watch, poll, readOnly, pollInterval, namespaced, namespaces, theme, password)
 		},
 	}

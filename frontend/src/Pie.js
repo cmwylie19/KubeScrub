@@ -13,7 +13,7 @@ const data = [
   { name: 'Orphaned', value: 300 }
 ];
 
-export default function Deposits() {
+export default function PieLayout() {
   return (
     <React.Fragment>
       <Title>Orphaned Resources Percentages</Title>
