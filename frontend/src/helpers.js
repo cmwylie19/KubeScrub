@@ -13,3 +13,10 @@ export const fetchConfigMaps = async () => {
     // alert(JSON.stringify(config, null, 2));
     return config;
 }
+
+export const fetchSecrets = async () => {
+    const response = await fetch('http://localhost:8080/scrub/secret');
+    const data = await response.json();
+    // alert(JSON.stringify(config, null, 2));
+    return data;
+}

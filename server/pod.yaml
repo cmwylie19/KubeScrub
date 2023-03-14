@@ -75,3 +75,17 @@ subjects:
 - kind: ServiceAccount
   name: default
   namespace: default
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  name: default
+---
+apiVersion: v1
+data:
+  hi: eW91
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: test-me

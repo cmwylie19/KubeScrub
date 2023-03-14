@@ -22,8 +22,9 @@ export default function PieLayout({data}) {
       name: 'Orphaned',
       value: count
     }]
-    setPieData(tempData)
+    return setPieData(tempData)
   }, [pieData]);
+
   return (
     <React.Fragment>
       <Title>Orphaned Resources Percentages</Title>

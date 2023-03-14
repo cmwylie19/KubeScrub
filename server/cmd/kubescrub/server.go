@@ -17,6 +17,7 @@ var (
 	namespaces   []string
 	theme        string
 	password     string
+	namespace    string
 )
 
 func getServerCommand() *cobra.Command {
@@ -27,7 +28,7 @@ func getServerCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			s := &server.Server{}
 			s.Start()
-			return s.Serve(key, cert, port, watch, poll, readOnly, pollInterval, namespaced, namespaces, theme, password)
+			return s.Serve(key, cert, port, watch, poll, readOnly, pollInterval, namespaced, namespaces, theme, password, namespace)
 		},
 	}
 
@@ -41,7 +42,7 @@ func getServerCommand() *cobra.Command {
 	cmd.PersistentFlags().StringSliceVarP(&namespaces, "namespaces", "", []string{}, "Namespaces to watch")
 	cmd.PersistentFlags().StringVarP(&theme, "theme", "", "dark", "Theme to use for the UI")
 	cmd.PersistentFlags().StringVarP(&password, "password", "", "cluster-admin", "Password to use for the UI")
-
+	cmd.PersistentFlags().StringVarP(&namespace, "namespace", "", "default", "Namespace to deploy KubeScrub to")
 	cmd.PersistentFlags().StringSliceVar(&watch, "watch", []string{"cm", "sa", "svc", "secret"}, "Types of resources to watch")
 
 	return cmd

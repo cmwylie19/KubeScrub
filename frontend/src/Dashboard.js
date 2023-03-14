@@ -30,7 +30,7 @@ import Pie from './PieLayout';
 import TableResources from './TableResources';
 import Config from "./Config"
 import Login from './Login';
-import { fetchConfig, fetchConfigMaps } from "./helpers"
+import { fetchConfig, fetchConfigMaps, fetchSecrets } from "./helpers"
 
 const Div = styled('div')(({ theme }) => ({
   ...theme.typography.button,
@@ -133,16 +133,33 @@ function DashboardContent() {
   const [mode, setMode] = React.useState('dark');
   const [pw, setPW] = React.useState('')
   const [cm,setCM]=React.useState([])
+  const [secret,setSecret]=React.useState([])
   const [resources, setResources] = React.useState("all")
   const [namespaces, setNamespaces] = React.useState("all")
   const [resource, setResource] = React.useState("all")
   const [namespace, setNamespace] = React.useState("all")
 
+  const decideData = (cm,secret, resources) => {
+    if (resources === "all") {
+      return cm.concat(secret)
+    }
+    else if (resources === "CMs") {
+      return cm
+    }
+    else if (resources === "Secrets") {
+      return secret
+    }
+
+  }
   const toggleDrawer = () => {
     setOpen(!open);
   };
 
   React.useEffect(() => {
+    fetchSecrets().then((data) => {
+      data.items.map((item) => item.kind = "Secret")
+      setSecret(data.items)
+    })
     fetchConfigMaps().then((data) => {
       data.items.map((item) => item.kind = "ConfigMap")
       setCM(data.items)
@@ -314,7 +331,7 @@ function DashboardContent() {
               {/* TableResources */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <TableResources data={cm} />
+                  <TableResources data={decideData(cm,secret,resources)} />
                 </Paper>
               </Grid>
             </Grid>

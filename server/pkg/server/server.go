@@ -14,9 +14,12 @@ import (
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
+
+const NAMESPACE = "default"
 
 type Server struct {
 	Port         string                `json:"port"`
@@ -33,28 +36,9 @@ type Server struct {
 	Theme        string                `json:"theme"`
 	ClientSet    *kubernetes.Clientset `json:"clientset"`
 	ConfigMaps   *[]v1.ConfigMap       `json:"configmaps"`
+	Secrets      *[]v1.Secret          `json:"secrets"`
 }
 
-func (s *Server) CreateSecret(ns string) {
-
-	data := make(map[string][]byte)
-	data["user"] = []byte("admin")
-	data["password"] = []byte(s.Password)
-
-	_, err := s.ClientSet.CoreV1().Secrets(ns).Create(context.Background(), &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kubescrub-creds",
-			Namespace: ns,
-		},
-		Data: data,
-	}, metav1.CreateOptions{})
-
-	if err != nil {
-		fmt.Println("ERROR CREATING SECRET ", err)
-		utils.Logger.Error("Error creating secret", zap.Error(err))
-	}
-
-}
 func (s *Server) Start() {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -67,7 +51,6 @@ func (s *Server) Start() {
 	}
 	fmt.Printf("Clientset: %T", clientset)
 	s.ClientSet = clientset
-	// s.CreateSecret(s.Namespace)
 }
 
 func EnableCors(f http.HandlerFunc) http.HandlerFunc {
@@ -115,6 +98,7 @@ func (s *Server) GetSAs(ns string) *v1.ServiceAccountList {
 }
 
 func (s *Server) GetSecrets(ns string) *v1.SecretList {
+
 	secrets, err := s.ClientSet.CoreV1().Secrets(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		utils.Logger.Error("Error getting secrets", zap.Error(err))
@@ -152,14 +136,27 @@ func (s *Server) CMHandler(w http.ResponseWriter, r *http.Request) {
 
 // Orphaned Secrets are secrets not associated with a pod, service, or service account
 func (s *Server) SecretHandler(w http.ResponseWriter, r *http.Request) {
-	utils.Logger.Info("Service Handler")
+	utils.Logger.Info("Secret Handler")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	utils.Logger.Info("Scrubbing Kubernetes Cluster")
+
+	// // get pods in all namespaces
+	pods := s.GetPods("default")
+
+	// get secrets in all namespaces
+	secrets := s.GetSecrets("default")
+	// find which configmaps are not referenced in pods
+	fmt.Printf("%+v", secrets)
+	for _, val := range secrets.Items {
+		// exists in podsList
+		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "secret") == true
+		// repurpose some field on CM
+		val.Annotations["exists"] = strconv.FormatBool(exists)
+	}
 
 	// find scrub assets
 
-	json.NewEncoder(w).Encode(s)
+	json.NewEncoder(w).Encode(secrets)
 }
 
 // Orphaned Services are services not associated with a pod
@@ -201,7 +198,7 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, `{"alive": true}`)
 }
 
-func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bool, pollInterval int, namespaced bool, namespaces []string, theme, password string) error {
+func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bool, pollInterval int, namespaced bool, namespaces []string, theme, password, namespace string) error {
 	fmt.Println(watch)
 
 	s.Port = port
@@ -213,7 +210,7 @@ func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bo
 	s.PollInterval = pollInterval
 	s.Namespaced = namespaced
 	s.Namespaces = namespaces
-	// s.Namespace = namespace
+	s.Namespace = namespace
 	s.Theme = theme
 	s.Password = password
 
