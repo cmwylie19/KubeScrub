@@ -4,14 +4,9 @@ import { ResponsiveContainer, PieChart, Pie,Cell, Legend } from 'recharts';
 import Typography from '@mui/material/Typography';
 import Title from './Title';
 
-function preventDefault(event) {
-  event.preventDefault();
-}
+
 const COLORS = ['transparent','#00C49F', '#FFBB28', '#FF8042'];
-const ddata = [
-  { name: 'Total', value: 350 },
-  { name: 'Orphaned', value: 300 }
-];
+
 
 export default function PieLayout({data}) {
   const [pieData, setPieData] = React.useState();
@@ -28,7 +23,7 @@ export default function PieLayout({data}) {
       value: count
     }]
     setPieData(tempData)
-  }, []);
+  }, [pieData]);
   return (
     <React.Fragment>
       <Title>Orphaned Resources Percentages</Title>

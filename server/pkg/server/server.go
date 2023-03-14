@@ -28,12 +28,33 @@ type Server struct {
 	PollInterval int                   `json:"poll-interval"`
 	Namespaced   bool                  `json:"namespaced"`
 	Namespaces   []string              `json:"namespaces"`
+	Namespace    string                `json:"namespace"`
 	Password     string                `json:"password"`
 	Theme        string                `json:"theme"`
 	ClientSet    *kubernetes.Clientset `json:"clientset"`
 	ConfigMaps   *[]v1.ConfigMap       `json:"configmaps"`
 }
 
+func (s *Server) CreateSecret(ns string) {
+
+	data := make(map[string][]byte)
+	data["user"] = []byte("admin")
+	data["password"] = []byte(s.Password)
+
+	_, err := s.ClientSet.CoreV1().Secrets(ns).Create(context.Background(), &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "kubescrub-creds",
+			Namespace: ns,
+		},
+		Data: data,
+	}, metav1.CreateOptions{})
+
+	if err != nil {
+		fmt.Println("ERROR CREATING SECRET ", err)
+		utils.Logger.Error("Error creating secret", zap.Error(err))
+	}
+
+}
 func (s *Server) Start() {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -46,6 +67,7 @@ func (s *Server) Start() {
 	}
 	fmt.Printf("Clientset: %T", clientset)
 	s.ClientSet = clientset
+	// s.CreateSecret(s.Namespace)
 }
 
 func EnableCors(f http.HandlerFunc) http.HandlerFunc {
@@ -191,6 +213,7 @@ func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bo
 	s.PollInterval = pollInterval
 	s.Namespaced = namespaced
 	s.Namespaces = namespaces
+	// s.Namespace = namespace
 	s.Theme = theme
 	s.Password = password
 
