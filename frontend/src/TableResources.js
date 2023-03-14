@@ -7,7 +7,8 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Title from './Title';
 import { Typography } from '@mui/material';
-
+import ReportIcon from '@mui/icons-material/Report';
+import FmdGoodIcon from '@mui/icons-material/FmdGood';
 
 
 export default function TableResources({data}) {
@@ -29,7 +30,7 @@ export default function TableResources({data}) {
               <TableCell>{row.kind}</TableCell>
               <TableCell>{row.metadata.name}</TableCell>
               <TableCell>{row.metadata.namespace}</TableCell>
-              <TableCell align="right">{`${row.metadata.annotations.exists}`}</TableCell>
+              <TableCell align="right">{row.metadata.annotations.exists ===  "true"? <FmdGoodIcon color="success"/> : <ReportIcon color="error" />}</TableCell>
             </TableRow>
           ))}
         </TableBody>
