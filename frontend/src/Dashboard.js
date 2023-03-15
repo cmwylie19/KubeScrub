@@ -30,7 +30,7 @@ import Pie from './PieLayout';
 import TableResources from './TableResources';
 import Config from "./Config"
 import Login from './Login';
-import { fetchConfig, fetchConfigMaps, fetchSecrets } from "./helpers"
+import { fetchConfig, fetchConfigMaps, fetchSecrets, fetchServiceAccounts } from "./helpers"
 
 const Div = styled('div')(({ theme }) => ({
   ...theme.typography.button,
@@ -91,7 +91,18 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
-
+const MassagePieData = data => {
+  let count = 0
+  Array.isArray(data) && data.map((item) => item.exists === true && count++)
+    let tempData = [{
+      name: 'Total',
+      value: Array.isArray(data) ? data.length - count : 0
+    }, {
+      name: 'Orphaned',
+      value: count
+    }]
+    return tempData
+}
 
 const getDesignTokens = (mode) => ({
   palette: {
@@ -133,13 +144,14 @@ function DashboardContent() {
   const [mode, setMode] = React.useState('dark');
   const [pw, setPW] = React.useState('')
   const [cm,setCM]=React.useState([])
+  const [sa,setSA]=React.useState([])
   const [secret,setSecret]=React.useState([])
   const [resources, setResources] = React.useState("all")
   const [namespaces, setNamespaces] = React.useState("all")
   const [resource, setResource] = React.useState("all")
   const [namespace, setNamespace] = React.useState("all")
 
-  const decideData = (cm,secret, resources) => {
+  const decideData = (cm,secret,sa, resources) => {
     if (resources === "all") {
       return cm.concat(secret)
     }
@@ -149,6 +161,9 @@ function DashboardContent() {
     else if (resources === "Secrets") {
       return secret
     }
+    else if(resources === "SAs") {
+      return sa
+    }
 
   }
   const toggleDrawer = () => {
@@ -156,13 +171,17 @@ function DashboardContent() {
   };
 
   React.useEffect(() => {
+    fetchServiceAccounts().then((data) => {
+      console.log("SA "+JSON.stringify(data,undefined,2))
+      setSA(data)
+    })
     fetchSecrets().then((data) => {
-      data.items.map((item) => item.kind = "Secret")
-      setSecret(data.items)
+      console.log("SECRET "+JSON.stringify(data,undefined,2))
+      setSecret(data)
     })
     fetchConfigMaps().then((data) => {
-      data.items.map((item) => item.kind = "ConfigMap")
-      setCM(data.items)
+      console.log("CM "+JSON.stringify(data,undefined,2))
+      setCM(data)
     })
     fetchConfig().then((config) => {
       setMode(config.theme)
@@ -257,12 +276,6 @@ function DashboardContent() {
       </ListItemIcon>
       <ListItemText primary="Config Maps" />
     </ListItemButton>
-    <ListItemButton onClick={()=>setResources("SVCs")}>
-      <ListItemIcon>
-        <PeopleIcon />
-      </ListItemIcon>
-      <ListItemText primary="Services" />
-    </ListItemButton>
     <ListItemButton  onClick={()=>setResources("Secrets")}>
       <ListItemIcon>
         <BarChartIcon />
@@ -319,19 +332,20 @@ function DashboardContent() {
               <Grid item xs={12}>
                 <Paper
                   sx={{
-                    p: 2,
+                    p: 1,
+                    margin: 2,
                     display: 'flex',
                     flexDirection: 'column',
                     height: 340,
                   }}
                 >
-                  <Pie data={cm} />
+                  <Pie data={MassagePieData(decideData(cm,secret,sa,resources))} />
                 </Paper>
               </Grid>
               {/* TableResources */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <TableResources data={decideData(cm,secret,resources)} />
+                  <TableResources data={decideData(cm,secret,sa,resources)} />
                 </Paper>
               </Grid>
             </Grid>

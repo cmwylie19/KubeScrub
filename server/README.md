@@ -39,7 +39,7 @@ k run curler --image=nginx --rm -i --restart=Never -- curl kubescrub:8080/scrub/
 
 ```bash
 kind delete clusters --all
-docker images -q | awk '{ print $3  }' | xargs docker rmi
+docker images | awk 'FNR == 2  {print $3}' |  xargs docker rmi
 
 kind create cluster 
 GOARCH=arm64 GOOS=linux go build -o kubescrub ./cmd/kubescrub
@@ -48,5 +48,6 @@ mv kubescrub build/kubescrub
 docker build -t cmwylie19/kubescrub:0.0.1 build/
 docker push cmwylie19/kubescrub:0.0.1
 k apply -f pod.yaml
+sleep 15;
 k logs -f kubescrub 
 ```

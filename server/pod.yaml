@@ -89,3 +89,11 @@ kind: Secret
 metadata:
   creationTimestamp: null
   name: test-me
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  name: numtwo
+  annotations:
+    kubescrub.io/scrub: "true"

@@ -1,14 +1,13 @@
 import * as React from 'react';
-import Link from '@mui/material/Link';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Title from './Title';
-import { Typography } from '@mui/material';
 import ReportIcon from '@mui/icons-material/Report';
 import FmdGoodIcon from '@mui/icons-material/FmdGood';
+import { Typography } from '@mui/material';
 
 
 export default function TableResources({data}) {
@@ -26,11 +25,11 @@ export default function TableResources({data}) {
         </TableHead>
         <TableBody>
           {Array.isArray(data) && data.map((row) => (
-            <TableRow key={row.metadata.uid}>
+            <TableRow >
               <TableCell>{row.kind}</TableCell>
-              <TableCell>{row.metadata.name}</TableCell>
-              <TableCell>{row.metadata.namespace}</TableCell>
-              <TableCell align="right">{row.metadata.annotations.exists ===  "true"? <FmdGoodIcon color="success"/> : <ReportIcon color="error" />}</TableCell>
+              <TableCell>{row.name}</TableCell>
+              <TableCell>{row.namespace}</TableCell>
+              <TableCell align="right">{row.exists ===  true? <Typography color="lightgreen">NO</Typography> : <Typography color="orange">YES</Typography>}</TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/cmwylie19/kubescrub/pkg/utils"
@@ -21,6 +20,12 @@ import (
 
 const NAMESPACE = "default"
 
+type KubernetesObject struct {
+	Kind      string `json:"kind"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+	Exists    bool   `json:"exists"`
+}
 type Server struct {
 	Port         string                `json:"port"`
 	Key          string                `json:"key"`
@@ -35,8 +40,6 @@ type Server struct {
 	Password     string                `json:"password"`
 	Theme        string                `json:"theme"`
 	ClientSet    *kubernetes.Clientset `json:"clientset"`
-	ConfigMaps   *[]v1.ConfigMap       `json:"configmaps"`
-	Secrets      *[]v1.Secret          `json:"secrets"`
 }
 
 func (s *Server) Start() {
@@ -79,15 +82,6 @@ func (s *Server) GetCMs(ns string) *v1.ConfigMapList {
 	return cms
 }
 
-func (s *Server) GetSVCs(ns string) *v1.ServiceList {
-	svcs, err := s.ClientSet.CoreV1().Services(ns).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		utils.Logger.Error("Error getting svc's", zap.Error(err))
-		panic(err.Error())
-	}
-	return svcs
-}
-
 func (s *Server) GetSAs(ns string) *v1.ServiceAccountList {
 	sas, err := s.ClientSet.CoreV1().ServiceAccounts(ns).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
@@ -109,6 +103,7 @@ func (s *Server) GetSecrets(ns string) *v1.SecretList {
 
 // Orphaned ConfigMaps are configmaps not associated with a pod
 func (s *Server) CMHandler(w http.ResponseWriter, r *http.Request) {
+	cm_list := []KubernetesObject{}
 	utils.Logger.Info("CM Handler")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -119,23 +114,21 @@ func (s *Server) CMHandler(w http.ResponseWriter, r *http.Request) {
 	// get configmaps in all namespaces
 	cms := s.GetCMs("default")
 	// find which configmaps are not referenced in pods
-	for i, val := range cms.Items {
+	for _, val := range cms.Items {
 		// exists in podsList
 		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "configmap") == true
 		// repurpose some field on CM
-		cms.Items[i].Annotations["exists"] = strconv.FormatBool(exists)
+		cm_list = append(cm_list, KubernetesObject{Kind: "ConfigMap", Name: val.Name, Namespace: val.Namespace, Exists: exists})
 	}
-
-	fmt.Printf("PODS: %+v\n", pods)
-	fmt.Printf("CMs: %+v\n", cms)
 
 	// find scrub assets
 
-	json.NewEncoder(w).Encode(cms)
+	json.NewEncoder(w).Encode(cm_list)
 }
 
 // Orphaned Secrets are secrets not associated with a pod, service, or service account
 func (s *Server) SecretHandler(w http.ResponseWriter, r *http.Request) {
+	secret_list := []KubernetesObject{}
 	utils.Logger.Info("Secret Handler")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -146,41 +139,39 @@ func (s *Server) SecretHandler(w http.ResponseWriter, r *http.Request) {
 	// get secrets in all namespaces
 	secrets := s.GetSecrets("default")
 	// find which configmaps are not referenced in pods
-	fmt.Printf("%+v", secrets)
+
 	for _, val := range secrets.Items {
 		// exists in podsList
 		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "secret") == true
 		// repurpose some field on CM
-		val.Annotations["exists"] = strconv.FormatBool(exists)
+		secret_list = append(secret_list, KubernetesObject{Kind: "Secret", Name: val.Name, Namespace: val.Namespace, Exists: exists})
 	}
 
 	// find scrub assets
 
-	json.NewEncoder(w).Encode(secrets)
-}
-
-// Orphaned Services are services not associated with a pod
-func (s *Server) ServiceHandler(w http.ResponseWriter, r *http.Request) {
-	utils.Logger.Info("Service Handler")
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	utils.Logger.Info("Scrubbing Kubernetes Cluster")
-
-	// find scrub assets
-
-	json.NewEncoder(w).Encode(s)
+	json.NewEncoder(w).Encode(secret_list)
 }
 
 // Orphaned Service Accounts are service accounts not associated with a pod, clusterrolebinding, or rolebinding
 func (s *Server) ServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
+	sa_list := []KubernetesObject{}
 	utils.Logger.Info("Service Account Handler")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	utils.Logger.Info("Scrubbing Kubernetes Cluster")
 
-	// find scrub assets
+	// get pods in all namespaces
+	pods := s.GetPods("default")
+	// get secrets in all namespaces
+	sas := s.GetSAs("default")
 
-	json.NewEncoder(w).Encode(s)
+	for _, val := range sas.Items {
+		// find which serviceAccounts are not referenced in pods
+		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "serviceaccount") == true
+
+		sa_list = append(sa_list, KubernetesObject{Kind: "ServiceAccount", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+
+	}
+	json.NewEncoder(w).Encode(sa_list)
 }
 func (s *Server) ConfigHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -218,7 +209,6 @@ func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bo
 	http.HandleFunc("/config", EnableCors(s.ConfigHandler))
 	http.HandleFunc("/scrub/cm", EnableCors(s.CMHandler))
 	http.HandleFunc("/scrub/secret", EnableCors(s.SecretHandler))
-	http.HandleFunc("/scrub/svc", EnableCors(s.ServiceHandler))
 	http.HandleFunc("/scrub/sa", EnableCors(s.ServiceAccountHandler))
 
 	if key == "" || cert == "" {
