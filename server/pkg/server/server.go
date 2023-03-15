@@ -31,13 +31,9 @@ type Server struct {
 	Key          string                `json:"key"`
 	Cert         string                `json:"cert"`
 	Watch        []string              `json:"watch"`
-	ReadOnly     bool                  `json:"read-only"`
 	Poll         bool                  `json:"poll"`
 	PollInterval int                   `json:"poll-interval"`
-	Namespaced   bool                  `json:"namespaced"`
 	Namespaces   []string              `json:"namespaces"`
-	Namespace    string                `json:"namespace"`
-	Password     string                `json:"password"`
 	Theme        string                `json:"theme"`
 	ClientSet    *kubernetes.Clientset `json:"clientset"`
 }
@@ -244,7 +240,7 @@ func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, `{"alive": true}`)
 }
 
-func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bool, pollInterval int, namespaced bool, namespaces []string, theme, password, namespace string) error {
+func (s *Server) Serve(key, cert, port string, watch []string, poll bool, pollInterval int, namespaces []string, theme string) error {
 	fmt.Println(watch)
 
 	s.Port = port
@@ -252,13 +248,10 @@ func (s *Server) Serve(key, cert, port string, watch []string, poll, readOnly bo
 	s.Cert = cert
 	s.Watch = watch
 	s.Poll = poll
-	s.ReadOnly = readOnly
+
 	s.PollInterval = pollInterval
-	s.Namespaced = namespaced
 	s.Namespaces = namespaces
-	s.Namespace = namespace
 	s.Theme = theme
-	s.Password = password
 
 	http.HandleFunc("/", EnableCors(HealthCheckHandler))
 	http.HandleFunc("/config", EnableCors(s.ConfigHandler))
