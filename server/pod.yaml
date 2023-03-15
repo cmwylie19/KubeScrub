@@ -40,7 +40,7 @@ spec:
   containers:
   - image: cmwylie19/kubescrub:0.0.1
     name: kubescrub
-    command: ["./kubescrub", "serve" ,"-p", "8080","--theme", "dark","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
+    command: ["./kubescrub", "serve" ,"-p", "8080","--theme", "light","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
     ports:
     - containerPort: 80
     resources: {}

@@ -1,6 +1,7 @@
 # KubeScrub Dashboard
 
 Configuration:
+
 - ReadOnly
 - Poll
 - Watch (Objects)
