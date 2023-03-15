@@ -108,69 +108,124 @@ func (s *Server) CMHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
-	// get pods in all namespaces
-	pods := s.GetPods("default")
+	// for each namespace
+	if len(s.Namespaces) > 0 {
+		for _, ns := range s.Namespaces {
 
-	// get configmaps in all namespaces
-	cms := s.GetCMs("default")
-	// find which configmaps are not referenced in pods
-	for _, val := range cms.Items {
-		// exists in podsList
-		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "configmap") == true
-		// repurpose some field on CM
-		cm_list = append(cm_list, KubernetesObject{Kind: "ConfigMap", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+			// get pods in all namespaces
+			pods := s.GetPods(ns)
+
+			// get configmaps in all namespaces
+			cms := s.GetCMs(ns)
+
+			for _, val := range cms.Items {
+				// make educated guess which configmaps are not referenced in pods
+				// if name of the configmap is in the pod spec, and the pod spec contains the word configmap, then it is referenced
+				exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "configmap") == true
+
+				cm_list = append(cm_list, KubernetesObject{Kind: "ConfigMap", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+			}
+		}
+	} else {
+		pods := s.GetPods("")
+
+		// get configmaps in all namespaces
+		cms := s.GetCMs("")
+
+		for _, val := range cms.Items {
+			// make educated guess which configmaps are not referenced in pods
+			// if name of the configmap is in the pod spec, and the pod spec contains the word configmap, then it is referenced
+			exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "configmap") == true
+
+			cm_list = append(cm_list, KubernetesObject{Kind: "ConfigMap", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+		}
 	}
-
-	// find scrub assets
 
 	json.NewEncoder(w).Encode(cm_list)
 }
 
-// Orphaned Secrets are secrets not associated with a pod, service, or service account
+// Orphaned Secrets are secrets not associated with a pod (service account ignored)
 func (s *Server) SecretHandler(w http.ResponseWriter, r *http.Request) {
 	secret_list := []KubernetesObject{}
 	utils.Logger.Info("Secret Handler")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
-	// // get pods in all namespaces
-	pods := s.GetPods("default")
+	if len(s.Namespaces) > 0 {
+		for _, ns := range s.Namespaces {
+			// // get pods in all namespaces
+			pods := s.GetPods(ns)
 
-	// get secrets in all namespaces
-	secrets := s.GetSecrets("default")
-	// find which configmaps are not referenced in pods
+			// get secrets in all namespaces
+			secrets := s.GetSecrets(ns)
 
-	for _, val := range secrets.Items {
-		// exists in podsList
-		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "secret") == true
-		// repurpose some field on CM
-		secret_list = append(secret_list, KubernetesObject{Kind: "Secret", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+			// make guess which secrets are not referenced in pods
+
+			for _, val := range secrets.Items {
+				// make educated guess which secrets are not referenced in pods
+				// if name of the secret is in the pod spec, and the pod spec contains the word secret, then it is referenced
+				exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "secret") == true
+
+				secret_list = append(secret_list, KubernetesObject{Kind: "Secret", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+			}
+		}
+	} else {
+		pods := s.GetPods("")
+
+		// get secrets in all namespaces
+		secrets := s.GetSecrets("")
+
+		// make guess which secrets are not referenced in pods
+
+		for _, val := range secrets.Items {
+			// make educated guess which secrets are not referenced in pods
+			// if name of the secret is in the pod spec, and the pod spec contains the word secret, then it is referenced
+			exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "secret") == true
+
+			secret_list = append(secret_list, KubernetesObject{Kind: "Secret", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+		}
 	}
-
-	// find scrub assets
-
 	json.NewEncoder(w).Encode(secret_list)
 }
 
-// Orphaned Service Accounts are service accounts not associated with a pod, clusterrolebinding, or rolebinding
+// Orphaned Service Accounts are service accounts not associated with a pod, (clusterrolebinding, or rolebinding are ignored)
 func (s *Server) ServiceAccountHandler(w http.ResponseWriter, r *http.Request) {
 	sa_list := []KubernetesObject{}
 	utils.Logger.Info("Service Account Handler")
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 
-	// get pods in all namespaces
-	pods := s.GetPods("default")
-	// get secrets in all namespaces
-	sas := s.GetSAs("default")
+	if len(s.Namespaces) > 0 {
+		for _, ns := range s.Namespaces {
+			// get pods in all namespaces
+			pods := s.GetPods(ns)
+			// get secrets in all namespaces
+			sas := s.GetSAs(ns)
 
-	for _, val := range sas.Items {
-		// find which serviceAccounts are not referenced in pods
-		exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "serviceaccount") == true
+			for _, val := range sas.Items {
+				// make educated guess which sa are not referenced in pods
+				// if name of the sa is in the pod spec, and the pod spec contains the word sa, then it is referenced
+				exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "serviceaccount") == true
 
-		sa_list = append(sa_list, KubernetesObject{Kind: "ServiceAccount", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+				sa_list = append(sa_list, KubernetesObject{Kind: "ServiceAccount", Name: val.Name, Namespace: val.Namespace, Exists: exists})
 
+			}
+		}
+	} else {
+		pods := s.GetPods("")
+		// get secrets in all namespaces
+		sas := s.GetSAs("")
+
+		for _, val := range sas.Items {
+			// make educated guess which sa are not referenced in pods
+			// if name of the sa is in the pod spec, and the pod spec contains the word sa, then it is referenced
+			exists := strings.Contains(fmt.Sprintf("%#v", pods), val.Name) == true && strings.Contains(strings.ToLower(fmt.Sprintf("%#v", pods)), "serviceaccount") == true
+
+			sa_list = append(sa_list, KubernetesObject{Kind: "ServiceAccount", Name: val.Name, Namespace: val.Namespace, Exists: exists})
+
+		}
 	}
+
 	json.NewEncoder(w).Encode(sa_list)
 }
 func (s *Server) ConfigHandler(w http.ResponseWriter, r *http.Request) {

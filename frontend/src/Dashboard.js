@@ -93,15 +93,15 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 const MassagePieData = data => {
   let count = 0
-  Array.isArray(data) && data.map((item) => item.exists === true && count++)
-    let tempData = [{
-      name: 'Total',
-      value: Array.isArray(data) ? data.length - count : 0
-    }, {
-      name: 'Orphaned',
-      value: count
-    }]
-    return tempData
+  Array.isArray(data) && data.map((item) => item.exists === false && count++)
+  let tempData = [{
+    name: 'Used',
+    value: Array.isArray(data) ? data.length - count : 0
+  }, {
+    name: 'Orphaned',
+    value: count
+  }]
+  return tempData
 }
 
 const getDesignTokens = (mode) => ({
@@ -143,17 +143,16 @@ function DashboardContent() {
   const [open, setOpen] = React.useState(true);
   const [mode, setMode] = React.useState('dark');
   const [pw, setPW] = React.useState('')
-  const [cm,setCM]=React.useState([])
-  const [sa,setSA]=React.useState([])
-  const [secret,setSecret]=React.useState([])
+  const [cm, setCM] = React.useState([])
+  const [sa, setSA] = React.useState([])
+  const [secret, setSecret] = React.useState([])
   const [resources, setResources] = React.useState("all")
   const [namespaces, setNamespaces] = React.useState("all")
-  const [resource, setResource] = React.useState("all")
-  const [namespace, setNamespace] = React.useState("all")
 
-  const decideData = (cm,secret,sa, resources) => {
-    if (resources === "all") {
-      return cm.concat(secret)
+
+  const decideData = (cm, secret, sa, resources) => {
+    if (resources === "All") {
+      return [...cm,...secret,...sa]
     }
     else if (resources === "CMs") {
       return cm
@@ -161,7 +160,7 @@ function DashboardContent() {
     else if (resources === "Secrets") {
       return secret
     }
-    else if(resources === "SAs") {
+    else if (resources === "SAs") {
       return sa
     }
 
@@ -172,15 +171,15 @@ function DashboardContent() {
 
   React.useEffect(() => {
     fetchServiceAccounts().then((data) => {
-      console.log("SA "+JSON.stringify(data,undefined,2))
+      console.log("SA " + JSON.stringify(data, undefined, 2))
       setSA(data)
     })
     fetchSecrets().then((data) => {
-      console.log("SECRET "+JSON.stringify(data,undefined,2))
+      console.log("SECRET " + JSON.stringify(data, undefined, 2))
       setSecret(data)
     })
     fetchConfigMaps().then((data) => {
-      console.log("CM "+JSON.stringify(data,undefined,2))
+      console.log("CM " + JSON.stringify(data, undefined, 2))
       setCM(data)
     })
     fetchConfig().then((config) => {
@@ -246,70 +245,69 @@ function DashboardContent() {
               justifyContent: 'center',
               alignItems: 'center',
             }}>
-              <Div>KubeScrub
-
-              </Div>      <div style={{ fontSize: "10px" }}>v0.0.1</div>
-
+              <Div>
+                KubeScrub
+              </Div>      
+              <div style={{ fontSize: "10px" }}>v0.0.1</div>
             </IconButton>
-
           </Toolbar>
           <Divider />
           <List component="nav">
-          <ListSubheader component="div" inset >
-      Resource
-    </ListSubheader>
-    <ListItemButton onClick={()=>setResources("All")}>
-      <ListItemIcon>
-        <LayersIcon />
-      </ListItemIcon>
-      <ListItemText primary="All" />
-    </ListItemButton>
-    <ListItemButton onClick={()=>setResources("SAs")}>
-      <ListItemIcon>
-        <DashboardIcon />
-      </ListItemIcon>
-      <ListItemText primary="Service Accounts" />
-    </ListItemButton>
-    <ListItemButton onClick={()=>setResources("CMs")}>
-      <ListItemIcon>
-        <ShoppingCartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Config Maps" />
-    </ListItemButton>
-    <ListItemButton  onClick={()=>setResources("Secrets")}>
-      <ListItemIcon>
-        <BarChartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Secrets" />
-    </ListItemButton>
+            <ListSubheader component="div" inset >
+              Resource
+            </ListSubheader>
+            <ListItemButton onClick={() => setResources("All")}>
+              <ListItemIcon>
+                <LayersIcon />
+              </ListItemIcon>
+              <ListItemText primary="All" />
+            </ListItemButton>
+            <ListItemButton onClick={() => setResources("SAs")}>
+              <ListItemIcon>
+                <DashboardIcon />
+              </ListItemIcon>
+              <ListItemText primary="Service Accounts" />
+            </ListItemButton>
+            <ListItemButton onClick={() => setResources("CMs")}>
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <ListItemText primary="Config Maps" />
+            </ListItemButton>
+            <ListItemButton onClick={() => setResources("Secrets")}>
+              <ListItemIcon>
+                <BarChartIcon />
+              </ListItemIcon>
+              <ListItemText primary="Secrets" />
+            </ListItemButton>
             <Divider sx={{ my: 1 }} />
             <ListSubheader component="div" inset>
-      Namespaces
-    </ListSubheader>
-    <ListItemButton>
-      <ListItemIcon>
-        <LayersIcon />
-      </ListItemIcon>
-      <ListItemText primary="All" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary="default" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary="kube-system" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <AssignmentIcon />
-      </ListItemIcon>
-      <ListItemText primary="kubefs" />
-    </ListItemButton>
+              Namespaces
+            </ListSubheader>
+            <ListItemButton>
+              <ListItemIcon>
+                <LayersIcon />
+              </ListItemIcon>
+              <ListItemText primary="All" />
+            </ListItemButton>
+            <ListItemButton>
+              <ListItemIcon>
+                <AssignmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="default" />
+            </ListItemButton>
+            <ListItemButton>
+              <ListItemIcon>
+                <AssignmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="kube-system" />
+            </ListItemButton>
+            <ListItemButton>
+              <ListItemIcon>
+                <AssignmentIcon />
+              </ListItemIcon>
+              <ListItemText primary="kubefs" />
+            </ListItemButton>
           </List>
         </Drawer>
         <Box
@@ -339,17 +337,17 @@ function DashboardContent() {
                     height: 340,
                   }}
                 >
-                  <Pie data={MassagePieData(decideData(cm,secret,sa,resources))} />
+                  <Pie data={MassagePieData(decideData(cm, secret, sa, resources))} />
                 </Paper>
               </Grid>
               {/* TableResources */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <TableResources data={decideData(cm,secret,sa,resources)} />
+                  <TableResources data={decideData(cm, secret, sa, resources)} />
                 </Paper>
               </Grid>
             </Grid>
-          
+
           </Container>
         </Box>
       </Box> : <Login setPW={setPW} />}
