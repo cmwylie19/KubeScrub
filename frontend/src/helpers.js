@@ -27,3 +27,42 @@ export const fetchServiceAccounts = async () => {
     // alert(JSON.stringify(config, null, 2));
     return data;
 }
+
+export const configHydration =  (poll, interval,resources, setCM, setSecret, setSA) => {
+
+    if (resources.includes("ConfigMap")) {
+        fetchConfigMaps().then((data) => {
+            setCM(data)
+        })
+    }
+    if (resources.includes("Secret")) {
+        fetchSecrets().then((data) => {
+            setSecret(data)
+        })
+    }
+    if (resources.includes("ServiceAccount")) {
+        fetchServiceAccounts().then((data) => {
+            setSA(data)
+        })
+    }
+    if (!poll) {
+     
+        setInterval(() => {
+            if (resources.includes("ConfigMap")) {
+                fetchConfigMaps().then((data) => {
+                    setCM(data)
+                })
+            }
+            if (resources.includes("Secret")) {
+                fetchSecrets().then((data) => {
+                    setSecret(data)
+                })
+            }
+            if (resources.includes("ServiceAccount")) {
+                fetchServiceAccounts().then((data) => {
+                    setSA(data)
+                })
+            }
+        }, interval * 1000)
+    }
+}

@@ -5,8 +5,6 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Title from './Title';
-import ReportIcon from '@mui/icons-material/Report';
-import FmdGoodIcon from '@mui/icons-material/FmdGood';
 import { Typography } from '@mui/material';
 
 

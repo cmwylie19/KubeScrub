@@ -50,7 +50,7 @@ BootstrapDialogTitle.propTypes = {
   onClose: PropTypes.func.isRequired,
 };
 
-export default function CustomizedDialogs() {
+export default function Config({mode,pollInterval,poll,resources,namespaces}) {
   const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
@@ -62,8 +62,7 @@ export default function CustomizedDialogs() {
 
   return (
     <div>
-        <SettingsIcon onClick={handleClickOpen} color="secondary" />
-
+      <SettingsIcon onClick={handleClickOpen} color="secondary" />
       <BootstrapDialog
         onClose={handleClose}
         aria-labelledby="customized-dialog-title"
@@ -74,12 +73,13 @@ export default function CustomizedDialogs() {
         </BootstrapDialogTitle>
         <DialogContent dividers>
           <Typography gutterBottom>
-            <b>Read-only:</b> true <br />
-            <b>Poll:</b> true  <br /> 
-            <b>Poll Interval:</b> 60s <br />
-            <b>Watch:</b> Configmaps, Services, Service Accounts <br />
+            <b>Theme:</b> {mode} <br />
+            <b>Poll:</b> {poll.toString()}  <br />
+            <b>Poll Interval:</b> {pollInterval} <br />
+            <b>Resources:</b> {Array.isArray(resources) && resources.map(r=>r+" ")} <br />
+            <b>Namespaces:</b> {Array.isArray(namespaces) && namespaces.map(r=>r+" ")} <br />
           </Typography>
-        
+
         </DialogContent>
         <DialogActions>
           <Button autoFocus onClick={handleClose} color="secondary">

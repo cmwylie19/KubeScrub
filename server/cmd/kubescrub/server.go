@@ -35,9 +35,9 @@ func getServerCommand() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&poll, "poll", "", false, "Poll for changes instead of watching for changes")
 	cmd.PersistentFlags().IntVarP(&pollInterval, "poll-interval", "", 60, "Polling interval in seconds")
 	// cmd.PersistentFlags().BoolVarP(&readOnly, "read-only", "", false, "Run in read-only mode")
-	cmd.PersistentFlags().StringSliceVarP(&namespaces, "namespaces", "", []string{}, "Namespaces to watch, leave blank for all namespaces")
+	cmd.PersistentFlags().StringSliceVarP(&namespaces, "namespaces", "", []string{"default", "kube-system"}, "Namespaces to watch, leave blank for all namespaces")
 	cmd.PersistentFlags().StringVarP(&theme, "theme", "", "dark", "Theme to use for the UI")
-	cmd.PersistentFlags().StringSliceVar(&watch, "watch", []string{"cm", "sa", "secret"}, "Types of resources to watch")
+	cmd.PersistentFlags().StringSliceVar(&watch, "watch", []string{"ConfigMap", "ServiceAccount", "Secret"}, "Types of resources to watch")
 
 	return cmd
 }

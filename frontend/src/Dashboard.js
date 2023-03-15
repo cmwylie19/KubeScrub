@@ -12,25 +12,17 @@ import IconButton from '@mui/material/IconButton';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import PeopleIcon from '@mui/icons-material/People';
-import BarChartIcon from '@mui/icons-material/BarChart';
 import ListSubheader from '@mui/material/ListSubheader';
 import LayersIcon from '@mui/icons-material/Layers';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { amber, red, blue, grey, green } from '@mui/material/colors';
 import Pie from './PieLayout';
 import TableResources from './TableResources';
 import Config from "./Config"
-import Login from './Login';
-import { fetchConfig, fetchConfigMaps, fetchSecrets, fetchServiceAccounts } from "./helpers"
+import { fetchConfig,configHydration, fetchConfigMaps, fetchSecrets, fetchServiceAccounts } from "./helpers"
 
 const Div = styled('div')(({ theme }) => ({
   ...theme.typography.button,
@@ -120,10 +112,6 @@ const getDesignTokens = (mode) => ({
       }),
     },
     ...(mode === 'dark' && {
-      // background: {
-      //   default: deepOrange[900],
-      //   paper: deepOrange[900],
-      // },
     }),
     text: {
       ...(mode === 'light'
@@ -142,25 +130,42 @@ const getDesignTokens = (mode) => ({
 function DashboardContent() {
   const [open, setOpen] = React.useState(true);
   const [mode, setMode] = React.useState('dark');
-  const [pw, setPW] = React.useState('')
   const [cm, setCM] = React.useState([])
+  const [poll, setPoll] = React.useState(false)
+  const [pollInterval, setPollInterval] = React.useState(null)
   const [sa, setSA] = React.useState([])
   const [secret, setSecret] = React.useState([])
-  const [resources, setResources] = React.useState("all")
-  const [namespaces, setNamespaces] = React.useState("all")
+  const [resources, setResources] = React.useState([])
+  const [namespaces, setNamespaces] = React.useState([])
+  const [namespace, setNamespace] = React.useState("All")
+  const [resource, setResource] = React.useState("All")
 
 
-  const decideData = (cm, secret, sa, resources) => {
+  const decideData = (cm, secret, sa, resources, namespace) => {
     if (resources === "All") {
-      return [...cm,...secret,...sa]
+      if (namespace != "All") {
+        cm = cm.filter((item) => item.namespace === namespace)
+        secret = secret.filter((item) => item.namespace === namespace)
+        sa = sa.filter((item) => item.namespace === namespace)
+      }
+      return [...cm, ...secret, ...sa]
     }
-    else if (resources === "CMs") {
+    else if (resources === "ConfigMap") {
+      if (namespace != "All") {
+        cm = cm.filter((item) => item.namespace === namespace)
+      }
       return cm
     }
-    else if (resources === "Secrets") {
+    else if (resources === "Secret") {
+      if (namespace != "All") {
+        secret = secret.filter((item) => item.namespace === namespace)
+      }
       return secret
     }
-    else if (resources === "SAs") {
+    else if (resources === "ServiceAccount") {
+      if (namespace != "All") {
+        sa = sa.filter((item) => item.namespace === namespace)
+      }
       return sa
     }
 
@@ -170,29 +175,40 @@ function DashboardContent() {
   };
 
   React.useEffect(() => {
-    fetchServiceAccounts().then((data) => {
-      console.log("SA " + JSON.stringify(data, undefined, 2))
-      setSA(data)
-    })
-    fetchSecrets().then((data) => {
-      console.log("SECRET " + JSON.stringify(data, undefined, 2))
-      setSecret(data)
-    })
-    fetchConfigMaps().then((data) => {
-      console.log("CM " + JSON.stringify(data, undefined, 2))
-      setCM(data)
-    })
-    fetchConfig().then((config) => {
+     fetchConfig().then((config) => {
+      console.log(config, undefined, 2)
+      setNamespaces(config.namespaces == [] ? "All" : config.namespaces)
+      setResources(config.watch)
+      
+      // if (resources.includes("ConfigMap")) {
+      //   fetchConfigMaps().then((data) => {
+      //     setCM(data)
+      //   })
+      // }
+      // if(resources.includes("Secret")) {
+      //   fetchSecrets().then((data) => {
+      //     setSecret(data)
+      //   })
+      // }
+      // if (resources.includes("ServiceAccount")) {
+      //   fetchServiceAccounts().then((data) => {
+      //     setSA(data)
+      //   })
+      // }
+
+      setPoll(config.poll)
+      setPollInterval(config['poll-interval'])
       setMode(config.theme)
+
+      configHydration(poll, pollInterval, resources, setCM, setSecret, setSA)
     })
-  }, [])
+
+  }, [poll,pollInterval])
 
   return (
     <ThemeProvider theme={createTheme(getDesignTokens(mode))}>
       <CssBaseline />
-      {pw === '' ? <Box sx={{ display: 'flex' }}>
-
-
+      <Box sx={{ display: 'flex' }}>
         <AppBar position="absolute" open={open}>
           <Toolbar
             sx={{
@@ -219,12 +235,10 @@ function DashboardContent() {
               noWrap
               sx={{ flexGrow: 1 }}
             >
-              {resources}:{namespaces}
+              {resource}:{namespace}
             </Typography>
             <IconButton color="inherit">
-
-              <Config />
-
+              <Config mode={mode} poll={poll} pollInterval={pollInterval} resources={resources} namespaces={namespaces} />
             </IconButton>
           </Toolbar>
         </AppBar>
@@ -247,7 +261,7 @@ function DashboardContent() {
             }}>
               <Div>
                 KubeScrub
-              </Div>      
+              </Div>
               <div style={{ fontSize: "10px" }}>v0.0.1</div>
             </IconButton>
           </Toolbar>
@@ -256,41 +270,45 @@ function DashboardContent() {
             <ListSubheader component="div" inset >
               Resource
             </ListSubheader>
-            <ListItemButton onClick={() => setResources("All")}>
+            <ListItemButton onClick={() => setResource("All")}>
               <ListItemIcon>
                 <LayersIcon />
               </ListItemIcon>
               <ListItemText primary="All" />
             </ListItemButton>
-            <ListItemButton onClick={() => setResources("SAs")}>
-              <ListItemIcon>
-                <DashboardIcon />
-              </ListItemIcon>
-              <ListItemText primary="Service Accounts" />
-            </ListItemButton>
-            <ListItemButton onClick={() => setResources("CMs")}>
-              <ListItemIcon>
-                <ShoppingCartIcon />
-              </ListItemIcon>
-              <ListItemText primary="Config Maps" />
-            </ListItemButton>
-            <ListItemButton onClick={() => setResources("Secrets")}>
-              <ListItemIcon>
-                <BarChartIcon />
-              </ListItemIcon>
-              <ListItemText primary="Secrets" />
-            </ListItemButton>
+            {Array.isArray(resources) && resources.map((r,i) => {
+              return (
+                <ListItemButton key={i} onClick={() => setResource(r)}>
+                  <ListItemIcon>
+                    <LayersIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={r} />
+                </ListItemButton>
+              )
+            }
+            )}
             <Divider sx={{ my: 1 }} />
             <ListSubheader component="div" inset>
               Namespaces
             </ListSubheader>
-            <ListItemButton>
+            <ListItemButton onClick={() => setNamespace("All")}>
               <ListItemIcon>
                 <LayersIcon />
               </ListItemIcon>
               <ListItemText primary="All" />
             </ListItemButton>
-            <ListItemButton>
+            {Array.isArray(namespaces) && namespaces.map((r,i) => {
+              return (
+                <ListItemButton onClick={() => setNamespace(r)} key={i}>
+                  <ListItemIcon>
+                    <LayersIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={r} />
+                </ListItemButton>
+              )
+            }
+            )}
+            {/* <ListItemButton>
               <ListItemIcon>
                 <AssignmentIcon />
               </ListItemIcon>
@@ -307,7 +325,7 @@ function DashboardContent() {
                 <AssignmentIcon />
               </ListItemIcon>
               <ListItemText primary="kubefs" />
-            </ListItemButton>
+            </ListItemButton> */}
           </List>
         </Drawer>
         <Box
@@ -337,20 +355,20 @@ function DashboardContent() {
                     height: 340,
                   }}
                 >
-                  <Pie data={MassagePieData(decideData(cm, secret, sa, resources))} />
+                  <Pie data={MassagePieData(decideData(cm, secret, sa, resource, namespace))} />
                 </Paper>
               </Grid>
               {/* TableResources */}
               <Grid item xs={12}>
                 <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-                  <TableResources data={decideData(cm, secret, sa, resources)} />
+                  <TableResources data={decideData(cm, secret, sa, resource, namespace)} />
                 </Paper>
               </Grid>
             </Grid>
 
           </Container>
         </Box>
-      </Box> : <Login setPW={setPW} />}
+      </Box>
     </ThemeProvider>
   );
 }
