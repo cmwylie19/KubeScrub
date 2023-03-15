@@ -13,11 +13,11 @@ export default function PieLayout({data}) {
     <React.Fragment>
       <Title>Orphaned Resources Percentages</Title>
       <Typography component="p" variant="h4">
-        {Number.parseFloat((Array.isArray(data) ? data[1].value : 0)/(Array.isArray(data) ? data[0].value + data[1].value : 0)*100).toFixed(0)}%
-      </Typography>
-      <Typography color="text.secondary" sx={{ flex: 1 }}>
+        {Number.parseFloat((Array.isArray(data) ? data[1].value : 0)/(Array.isArray(data) ? data[0].value + data[1].value : 0)*100).toFixed(0)}%       <Typography color="text.secondary" style={{fontWeight:"bold", display:"flex"}}>
         Orphaned Resources 
       </Typography>
+      </Typography>
+
       <ResponsiveContainer>
           <PieChart>
           <Legend />

@@ -45,7 +45,7 @@ export const configHydration =  (poll, interval,resources, setCM, setSecret, set
             setSA(data)
         })
     }
-    if (!poll) {
+    if (poll) {
      
         setInterval(() => {
             if (resources.includes("ConfigMap")) {
@@ -63,6 +63,6 @@ export const configHydration =  (poll, interval,resources, setCM, setSecret, set
                     setSA(data)
                 })
             }
-        }, interval * 1000)
+        }, 3 * 1000)
     }
 }
