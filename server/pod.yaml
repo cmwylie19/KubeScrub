@@ -5,6 +5,7 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: cm
+
 ---
 apiVersion: v1
 kind: Pod
@@ -29,23 +30,77 @@ spec:
   dnsPolicy: ClusterFirst
   restartPolicy: Always
 ---
-apiVersion: v1
-kind: Pod
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  creationTimestamp: null
+  name: kubescrub
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: kubescrub-ui
+            port:
+              number: 80
+        path: /ui
+        pathType: Exact
+      - backend:
+          service:
+            name: kubescrub
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+---
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   creationTimestamp: null
   labels:
-    run: kubescrub
+    app: kubescrub
   name: kubescrub
 spec:
-  containers:
-  - image: cmwylie19/kubescrub:0.0.1
-    name: kubescrub
-    command: ["./kubescrub", "serve" ,"-p", "8080","--theme", "light","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
-    ports:
-    - containerPort: 80
-    resources: {}
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubescrub
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kubescrub
+    spec:
+      containers:
+      - image: cmwylie19/kubescrub:0.0.1
+        name: kubescrub
+        command: ["./kubescrub", "serve" ,"-p", "80","--theme", "dark","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
+        ports:
+        - containerPort: 80
+          hostPort: 80
+        resources: {}
+status: {}
+# ---
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   creationTimestamp: null
+#   labels:
+#     run: kubescrub
+#   name: kubescrub
+# spec:
+#   containers:
+#   - image: cmwylie19/kubescrub:0.0.1
+#     name: kubescrub
+#     command: ["./kubescrub", "serve" ,"-p", "8080","--theme", "light","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
+#     ports:
+#     - containerPort: 80
+#     resources: {}
+#   dnsPolicy: ClusterFirst
+#   restartPolicy: Always
 ---
 apiVersion: v1
 kind: Service
@@ -56,11 +111,11 @@ metadata:
   name: kubescrub
 spec:
   ports:
-  - port: 8080
+  - port: 80
     protocol: TCP
-    targetPort: 8080
+    targetPort: 80
   selector:
-    run: kubescrub
+    app: kubescrub
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

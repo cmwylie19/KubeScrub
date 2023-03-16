@@ -1,0 +1,9 @@
+npm-debug.log
+.dockerignore
+**/.git
+**/.DS_Store
+**/node_modules
+env
+*env
+env/
+k8s/

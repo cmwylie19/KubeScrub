@@ -1,26 +1,27 @@
+export const URL = 'http://localhost:80'
 export const fetchConfig = async () => {
-  const response = await fetch("http://localhost:8080/config");
+  const response = await fetch(`${URL}/config`);
   const config = await response.json();
   // alert(JSON.stringify(config, null, 2));
   return config;
 };
 
 export const fetchConfigMaps = async () => {
-  const response = await fetch("http://localhost:8080/scrub/cm");
+  const response = await fetch(`${URL}/scrub/cm`);
   const data = await response.json();
   // alert(JSON.stringify(config, null, 2));
   return data;
 };
 
 export const fetchSecrets = async () => {
-  const response = await fetch("http://localhost:8080/scrub/secret");
+  const response = await fetch(`${URL}/scrub/secret`);
   const data = await response.json();
   // alert(JSON.stringify(config, null, 2));
   return data;
 };
 
 export const fetchServiceAccounts = async () => {
-  const response = await fetch("http://localhost:8080/scrub/sa");
+  const response = await fetch(`${URL}/scrub/sa`);
   const data = await response.json();
   // alert(JSON.stringify(config, null, 2));
   return data;
