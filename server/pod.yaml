@@ -5,7 +5,6 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: cm
-
 ---
 apiVersion: v1
 kind: Pod
@@ -29,31 +28,31 @@ spec:
     resources: {}
   dnsPolicy: ClusterFirst
   restartPolicy: Always
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  creationTimestamp: null
-  name: kubescrub
-spec:
-  ingressClassName: nginx
-  rules:
-  - http:
-      paths:
-      - backend:
-          service:
-            name: kubescrub-ui
-            port:
-              number: 80
-        path: /ui
-        pathType: Exact
-      - backend:
-          service:
-            name: kubescrub
-            port:
-              number: 80
-        path: /
-        pathType: Prefix
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   creationTimestamp: null
+#   name: kubescrub
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#   - http:
+#       paths:
+#       - backend:
+#           service:
+#             name: kubescrub-web
+#             port:
+#               number: 8080
+#         path: /
+#         pathType: Prefix
+#       - backend:
+#           service:
+#             name: kubescrub
+#             port:
+#               number: 8080
+#         path: /scrub
+#         pathType: Prefix
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -74,14 +73,26 @@ spec:
       labels:
         app: kubescrub
     spec:
+      serviceAccountName: kubescrub
       containers:
       - image: cmwylie19/kubescrub:0.0.1
         name: kubescrub
-        command: ["./kubescrub", "serve" ,"-p", "80","--theme", "dark","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
+        command: ["./kubescrub", "serve" ,"-p", "8080","--theme", "dark","--watch","ConfigMap,Secret","--namespaces","default","--poll","true","--poll-interval","3"]
         ports:
-        - containerPort: 80
-          hostPort: 80
+        - containerPort: 8080
         resources: {}
+        livenessProbe:
+          httpGet:
+            path: /scrub/healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /scrub/healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
 status: {}
 # ---
 # apiVersion: v1
@@ -111,25 +122,25 @@ metadata:
   name: kubescrub
 spec:
   ports:
-  - port: 80
+  - port: 8080
     protocol: TCP
-    targetPort: 80
+    targetPort: 8080
   selector:
     app: kubescrub
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  creationTimestamp: null
-  name: default-admin
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRoleBinding
+# metadata:
+#   creationTimestamp: null
+#   name: default-admin
+# roleRef:
+#   apiGroup: rbac.authorization.k8s.io
+#   kind: ClusterRole
+#   name: cluster-admin
+# subjects:
+# - kind: ServiceAccount
+#   name: default
+#   namespace: default
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -152,3 +163,82 @@ metadata:
   name: numtwo
   annotations:
     kubescrub.io/scrub: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kubescrub-web
+  name: kubescrub-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubescrub-web
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kubescrub-web
+    spec:
+      containers:
+      - image: cmwylie19/kubescrub-ui:0.0.1
+        name: kubescrub-ui
+        ports:
+        - containerPort: 8080
+        resources: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: kubescrub
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - configmaps
+  - secrets
+  verbs:
+  - list
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  name: kubescrub-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubescrub
+subjects:
+- kind: ServiceAccount
+  name: kubescrub
+  namespace: kubescrub-operator-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubescrub
+  namespace: kubescrub-operator-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kubescrub-web
+  name: kubescrub-web
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: kubescrub-web
+status:
+  loadBalancer: {}

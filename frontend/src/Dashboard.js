@@ -172,26 +172,9 @@ function DashboardContent() {
 
   React.useEffect(() => {
     fetchConfig().then((config) => {
-      console.log(config, undefined, 2);
       setNamespaces(config.namespaces === [] ? "All" : config.namespaces);
       setResources(config.watch);
-
-      // if (resources.includes("ConfigMap")) {
-      //   fetchConfigMaps().then((data) => {
-      //     setCM(data)
-      //   })
-      // }
-      // if(resources.includes("Secret")) {
-      //   fetchSecrets().then((data) => {
-      //     setSecret(data)
-      //   })
-      // }
-      // if (resources.includes("ServiceAccount")) {
-      //   fetchServiceAccounts().then((data) => {
-      //     setSA(data)
-      //   })
-      // }
-
+      
       setPoll(config.poll);
       setPollInterval(config["poll-interval"]);
       setMode(config.theme);

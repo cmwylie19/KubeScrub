@@ -253,8 +253,8 @@ func (s *Server) Serve(key, cert, port string, watch []string, poll bool, pollIn
 	s.Namespaces = namespaces
 	s.Theme = theme
 
-	http.HandleFunc("/", EnableCors(HealthCheckHandler))
-	http.HandleFunc("/config", EnableCors(s.ConfigHandler))
+	http.HandleFunc("/scrub/healthz", EnableCors(HealthCheckHandler))
+	http.HandleFunc("/scrub/config", EnableCors(s.ConfigHandler))
 	http.HandleFunc("/scrub/cm", EnableCors(s.CMHandler))
 	http.HandleFunc("/scrub/secret", EnableCors(s.SecretHandler))
 	http.HandleFunc("/scrub/sa", EnableCors(s.ServiceAccountHandler))

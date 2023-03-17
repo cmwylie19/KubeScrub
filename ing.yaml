@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  creationTimestamp: "2023-03-17T15:11:27Z"
+  generation: 3
+  name: nginx
+  namespace: default
+  resourceVersion: "1608"
+  uid: 143b6b97-5e1a-4d44-8342-b06c64b317e0
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - backend:
+          service:
+            name: kubescrub
+            port:
+              number: 8080
+        path: /scrub
+        pathType: Prefix
+      - backend:
+          service:
+            name: kubescrub-web
+            port:
+              number: 8080
+        path: /
+        pathType: Prefix
+status:
+  loadBalancer:
+    ingress:
+    - ip: 10.96.168.64

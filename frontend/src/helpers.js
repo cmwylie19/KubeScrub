@@ -1,6 +1,6 @@
-export const URL = 'http://localhost:80'
+export const URL = 'http://localhost:8080'
 export const fetchConfig = async () => {
-  const response = await fetch(`${URL}/config`);
+  const response = await fetch(`${URL}/scrub/config`);
   const config = await response.json();
   // alert(JSON.stringify(config, null, 2));
   return config;
